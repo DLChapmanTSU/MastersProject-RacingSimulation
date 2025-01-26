@@ -32,20 +32,22 @@ void ACarPawn::Tick(float DeltaTime)
 	{
 		float targetSpeed = CurrentThrottleInput * MaxSpeed;
 
-		float diff = targetSpeed - normalisedSpeed;
+		float diff = targetSpeed - CurrentSpeed;
 
 		bool isPositive = (diff > 0);
 
 		if (abs(diff) < MaxAcceleration)
 			CurrentSpeed = targetSpeed;
 		else
-			CurrentSpeed += (isPositive ? diff : -diff);
+			CurrentSpeed += (isPositive ? (MaxAcceleration * MaxSpeed) : -(MaxAcceleration * MaxSpeed));
 	}
 
 	if (CurrentTurnInput != 0.0f)
 	{
 		AddActorWorldRotation(FRotator(0, (CurrentTurnInput * TurnPower) * (CurrentSpeed / MaxSpeed), 0));
 	}
+
+	SetActorLocation(GetActorLocation() + ((GetActorForwardVector() * CurrentSpeed) * DeltaTime));
 }
 
 // Called to bind functionality to input

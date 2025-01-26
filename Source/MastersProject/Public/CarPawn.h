@@ -28,9 +28,12 @@ protected:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = Car)
 		float TurnPower;
 
-	float CurrentSpeed;
-	float CurrentTurnInput;
-	float CurrentThrottleInput;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = Car)
+		float CurrentSpeed;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = Car)
+		float CurrentTurnInput;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = Car)
+		float CurrentThrottleInput;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = Car)
 		UStaticMeshComponent* StaticMesh;
