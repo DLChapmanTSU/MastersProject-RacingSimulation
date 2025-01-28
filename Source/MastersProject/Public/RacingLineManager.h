@@ -30,4 +30,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 		FTransform GetClosestSplineLocation(FVector position);
 
+	UFUNCTION(BlueprintCallable)
+		FTransform GetNextSplineTransform(FVector position);
+
+	UFUNCTION(BlueprintCallable)
+		FTransform GetNextNextSplineTransform(FVector position);
 };

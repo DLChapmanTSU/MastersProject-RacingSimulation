@@ -32,3 +32,23 @@ FTransform ARacingLineManager::GetClosestSplineLocation(FVector position)
 	return Spline->FindTransformClosestToWorldLocation(position, ESplineCoordinateSpace::World);
 }
 
+FTransform ARacingLineManager::GetNextSplineTransform(FVector position)
+{
+	float dist = Spline->GetDistanceAlongSplineAtLocation(position, ESplineCoordinateSpace::World);
+	float key = Spline->GetInputKeyAtDistanceAlongSpline(dist);
+	int truncKey = trunc(key) + 1;
+	if (truncKey >= Spline->GetNumberOfSplinePoints())
+		truncKey = 0;
+	return Spline->GetTransformAtSplineInputKey(truncKey, ESplineCoordinateSpace::World);
+}
+
+FTransform ARacingLineManager::GetNextNextSplineTransform(FVector position)
+{
+	float dist = Spline->GetDistanceAlongSplineAtLocation(position, ESplineCoordinateSpace::World);
+	float key = Spline->GetInputKeyAtDistanceAlongSpline(dist);
+	int truncKey = trunc(key) + 2;
+	if (truncKey >= Spline->GetNumberOfSplinePoints())
+		truncKey = 0;
+	return Spline->GetTransformAtSplineInputKey(truncKey, ESplineCoordinateSpace::World);
+}
+

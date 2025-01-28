@@ -3,6 +3,8 @@
 
 #include "AICarController.h"
 #include "CarPawn.h"
+#include "RacingLineManager.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
@@ -18,6 +20,10 @@ void AAICarController::BeginPlay()
 	Super::BeginPlay();
 
 	CarPawn = Cast<ACarPawn>(GetPawn());
+	TArray<AActor*> found;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ARacingLineManager::StaticClass(), found);
+	if (found.Num() > 0)
+		RacingLineManager = Cast<ARacingLineManager>(found[0]);
 }
 
 // Called every frame
@@ -25,9 +31,18 @@ void AAICarController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (CarPawn != nullptr && IsValid(CarPawn))
+	if (CarPawn != nullptr && IsValid(CarPawn) && RacingLineManager != nullptr && IsValid(RacingLineManager))
 	{
-		CarPawn->SetThrottleInput(0.5f);
+		FTransform targetTransform = RacingLineManager->GetClosestSplineLocation(CarPawn->GetActorLocation() + (CarPawn->GetActorForwardVector() * 200.0f));
+		if (targetTransform.GetRotation() == CarPawn->GetActorRotation().Quaternion())
+		{
+			CarPawn->SetThrottleInput(1.0f);
+			CarPawn->SetTurnInput(0.0f);
+		}
+		else
+		{
+			
+		}
 	}
 }
 

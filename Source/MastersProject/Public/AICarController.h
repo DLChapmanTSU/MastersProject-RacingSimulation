@@ -7,6 +7,7 @@
 #include "AICarController.generated.h"
 
 class ACarPawn;
+class ARacingLineManager;
 
 UCLASS()
 class MASTERSPROJECT_API AAICarController : public AAIController
@@ -22,6 +23,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	ACarPawn* CarPawn;
+	ARacingLineManager* RacingLineManager;
 
 public:
 	// Called every frame
