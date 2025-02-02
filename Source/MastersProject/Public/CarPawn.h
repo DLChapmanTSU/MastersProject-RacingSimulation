@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "RacingLineManager.h"
 #include "CarPawn.generated.h"
 
 UCLASS()
@@ -47,4 +48,5 @@ public:
 
 	void SetThrottleInput(float Input);
 	void SetTurnInput(float Input);
+	FVector2f CalculateInputs(FTransform target, ARacingLineManager* lineManager, float DeltaTime);
 };

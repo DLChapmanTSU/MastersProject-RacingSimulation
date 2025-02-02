@@ -25,6 +25,8 @@ protected:
 	ACarPawn* CarPawn;
 	ARacingLineManager* RacingLineManager;
 
+	int NextSplineTarget = 1;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

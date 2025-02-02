@@ -39,7 +39,7 @@ FTransform ARacingLineManager::GetNextSplineTransform(FVector position)
 	int truncKey = trunc(key) + 1;
 	if (truncKey >= Spline->GetNumberOfSplinePoints())
 		truncKey = 0;
-	return Spline->GetTransformAtSplineInputKey(truncKey, ESplineCoordinateSpace::World);
+	return Spline->GetTransformAtSplineInputKey(key, ESplineCoordinateSpace::World);
 }
 
 FTransform ARacingLineManager::GetNextNextSplineTransform(FVector position)
@@ -50,5 +50,18 @@ FTransform ARacingLineManager::GetNextNextSplineTransform(FVector position)
 	if (truncKey >= Spline->GetNumberOfSplinePoints())
 		truncKey = 0;
 	return Spline->GetTransformAtSplineInputKey(truncKey, ESplineCoordinateSpace::World);
+}
+
+FTransform ARacingLineManager::GetSplinePoint(int i)
+{
+	if (i < 0 || i >= Spline->GetNumberOfSplinePoints())
+		return Spline->GetTransformAtSplinePoint(0, ESplineCoordinateSpace::World);
+
+	return Spline->GetTransformAtSplinePoint(i, ESplineCoordinateSpace::World);
+}
+
+int ARacingLineManager::GetSplinePointCount()
+{
+	return Spline->GetNumberOfSplinePoints();
 }
 

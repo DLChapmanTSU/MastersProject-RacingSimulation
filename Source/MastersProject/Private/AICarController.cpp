@@ -33,7 +33,17 @@ void AAICarController::Tick(float DeltaTime)
 
 	if (CarPawn != nullptr && IsValid(CarPawn) && RacingLineManager != nullptr && IsValid(RacingLineManager))
 	{
-		FTransform targetTransform = RacingLineManager->GetClosestSplineLocation(CarPawn->GetActorLocation() + (CarPawn->GetActorForwardVector() * 200.0f));
+		FTransform targetTransform = RacingLineManager->GetSplinePoint(NextSplineTarget);
+		FVector diff = targetTransform.GetLocation() - CarPawn->GetActorLocation();
+		if (diff.Length() <= 100.0f)
+		{
+			NextSplineTarget++;
+			if (NextSplineTarget >= RacingLineManager->GetSplinePointCount())
+				NextSplineTarget = 0;
+
+			targetTransform = RacingLineManager->GetSplinePoint(NextSplineTarget);
+		}
+		
 		if (targetTransform.GetRotation() == CarPawn->GetActorRotation().Quaternion())
 		{
 			CarPawn->SetThrottleInput(1.0f);
@@ -41,7 +51,11 @@ void AAICarController::Tick(float DeltaTime)
 		}
 		else
 		{
-			
+			FRotator rotatorDiff = targetTransform.Rotator() - CarPawn->GetActorRotation();
+
+			FVector2f inputs = CarPawn->CalculateInputs(targetTransform, RacingLineManager, DeltaTime);
+			CarPawn->SetThrottleInput(inputs.X);
+			CarPawn->SetTurnInput(inputs.Y);
 		}
 	}
 }

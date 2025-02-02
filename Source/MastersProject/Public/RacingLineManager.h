@@ -35,4 +35,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		FTransform GetNextNextSplineTransform(FVector position);
+
+	UFUNCTION(BlueprintCallable)
+		FTransform GetSplinePoint(int i);
+
+	UFUNCTION(BlueprintCallable)
+		int GetSplinePointCount();
+
+	USplineComponent* GetSpline() { return Spline; }
 };
