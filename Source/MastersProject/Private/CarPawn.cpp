@@ -3,6 +3,7 @@
 
 #include "CarPawn.h"
 #include "Components/SplineComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 
 // Sets default values
@@ -111,6 +112,7 @@ FVector2f ACarPawn::CalculateInputs(FTransform target, ARacingLineManager* lineM
 
 	FVector u = GetActorForwardVector();
 	FVector v = target.GetLocation() - GetActorLocation();
+	FVector rawV = v;
 	v.Normalize();
 
 	float angle = FMath::Acos(FVector::DotProduct(v, u) / (u.Length() * v.Length()));
@@ -123,6 +125,17 @@ FVector2f ACarPawn::CalculateInputs(FTransform target, ARacingLineManager* lineM
 		FVector rightDiff = target.GetLocation() - rightPos;
 		FVector leftDiff = target.GetLocation() - leftPos;
 
+		float distance = rawV.Length();
+		float distPerUpdate = CurrentSpeed * DeltaTime;
+		float updatesToDistance = distPerUpdate / distance;
+		float turnsPerUpdate = (CurrentTurnInput * TurnPower) * (CurrentSpeed / MaxSpeed) * DeltaTime;
+		float turnsRequired = abs(turnsPerUpdate / (UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), target.GetLocation()).Yaw - GetActorRotation().Yaw));
+
+		if (turnsRequired > updatesToDistance / 64.0f)
+		{
+			throttleInput = CurrentThrottleInput / 2.0f;
+		}
+
 		if (rightDiff.Length() < leftDiff.Length())
 		{
 			turnInput = 1.0f;
@@ -132,6 +145,39 @@ FVector2f ACarPawn::CalculateInputs(FTransform target, ARacingLineManager* lineM
 			turnInput = -1.0f;
 		}
 	}
+
+	/*FVector targetV = afterTarget.GetLocation() - target.GetLocation();
+	targetV.Normalize();
+	float targetAngle = FMath::Acos(FVector::DotProduct(targetV, v) / (v.Length() * targetV.Length()));
+
+	if (targetAngle > 0.1f)
+	{
+		FVector rightPos = GetActorLocation() + (GetActorRightVector() * 10.0f);
+		FVector leftPos = GetActorLocation() + (GetActorRightVector() * -10.0f);
+
+		FVector rightDiff = target.GetLocation() - rightPos;
+		FVector leftDiff = target.GetLocation() - leftPos;
+
+		float distance = targetV.Length();
+		float distPerUpdate = CurrentSpeed * DeltaTime;
+		float updatesToDistance = distPerUpdate / distance;
+		float turnsPerUpdate = (CurrentTurnInput * TurnPower) * (CurrentSpeed / MaxSpeed) * DeltaTime;
+		float turnsRequired = turnsPerUpdate / (target.Rotator().Yaw - GetActorRotation().Yaw);
+
+		if (turnsRequired * 100.0f > updatesToDistance)
+		{
+			throttleInput = CurrentThrottleInput / 2.0f;
+		}
+
+		if (rightDiff.Length() < leftDiff.Length())
+		{
+			turnInput = 1.0f;
+		}
+		else
+		{
+			turnInput = -1.0f;
+		}
+	}*/
 
 	FVector2f inputs = FVector2f::Zero();
 	inputs.X = throttleInput;
