@@ -14,6 +14,9 @@ ACarPawn::ACarPawn()
 
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>("StaticMesh");
 	StaticMesh->SetupAttachment(RootComponent);
+
+	BoxComponent = CreateDefaultSubobject<UBoxComponent>("BoxComponent");
+	BoxComponent->SetupAttachment(RootComponent);
 }
 
 // Called when the game starts or when spawned
@@ -27,6 +30,20 @@ void ACarPawn::BeginPlay()
 void ACarPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	NearbyCars.Empty();
+
+	TArray<AActor*> OverlappingActors;
+	BoxComponent->GetOverlappingActors(OverlappingActors);
+
+	for (int i = 0; i > OverlappingActors.Num(); i++)
+	{
+		ACarPawn* otherCar = Cast<ACarPawn>(OverlappingActors[i]);
+		if (otherCar != nullptr && IsValid(otherCar))
+		{
+			NearbyCars.AddUnique(otherCar);
+		}
+	}
 
 	float normalisedSpeed = CurrentSpeed / MaxSpeed;
 
@@ -184,5 +201,10 @@ FVector2f ACarPawn::CalculateInputs(FTransform target, ARacingLineManager* lineM
 	inputs.Y = turnInput;
 	
 	return inputs;
+}
+
+FVector2f ACarPawn::CalculateAvoidance(ARacingLineManager* lineManager, float DeltaTime)
+{
+	return FVector2f();
 }
 

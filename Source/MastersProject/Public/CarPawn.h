@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "RacingLineManager.h"
+#include "Components/BoxComponent.h"
 #include "CarPawn.generated.h"
 
 UCLASS()
@@ -39,6 +40,11 @@ protected:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = Car)
 		UStaticMeshComponent* StaticMesh;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = Car)
+		UBoxComponent* BoxComponent;
+
+	TArray<ACarPawn*> NearbyCars;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -49,4 +55,5 @@ public:
 	void SetThrottleInput(float Input);
 	void SetTurnInput(float Input);
 	FVector2f CalculateInputs(FTransform target, ARacingLineManager* lineManager, float DeltaTime);
+	FVector2f CalculateAvoidance(ARacingLineManager* lineManager, float DeltaTime);
 };
