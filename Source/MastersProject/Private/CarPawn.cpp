@@ -13,7 +13,7 @@ ACarPawn::ACarPawn()
 	PrimaryActorTick.bCanEverTick = true;
 
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>("StaticMesh");
-	StaticMesh->SetupAttachment(RootComponent);
+	RootComponent = StaticMesh;
 
 	BoxComponent = CreateDefaultSubobject<UBoxComponent>("BoxComponent");
 	BoxComponent->SetupAttachment(RootComponent);
@@ -63,7 +63,7 @@ void ACarPawn::Tick(float DeltaTime)
 
 	if (CurrentTurnInput != 0.0f)
 	{
-		AddActorWorldRotation(FRotator(0, (CurrentTurnInput * TurnPower) * (CurrentSpeed / MaxSpeed) * DeltaTime, 0));
+		AddActorWorldRotation(FRotator(0, (CurrentTurnInput * TurnPower) * FMath::Clamp(((MaxSpeed - CurrentSpeed) / MaxSpeed), 0.1f, 1.0f) * DeltaTime, 0));
 	}
 
 	SetActorLocation(GetActorLocation() + ((GetActorForwardVector() * CurrentSpeed) * DeltaTime));
@@ -145,12 +145,19 @@ FVector2f ACarPawn::CalculateInputs(FTransform target, ARacingLineManager* lineM
 		float distance = rawV.Length();
 		float distPerUpdate = CurrentSpeed * DeltaTime;
 		float updatesToDistance = distPerUpdate / distance;
-		float turnsPerUpdate = (CurrentTurnInput * TurnPower) * (CurrentSpeed / MaxSpeed) * DeltaTime;
+		float turnsPerUpdate = (CurrentTurnInput * TurnPower) * FMath::Clamp(((MaxSpeed - CurrentSpeed) / MaxSpeed), 0.1f, 1.0f) * DeltaTime;
 		float turnsRequired = abs(turnsPerUpdate / (UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), target.GetLocation()).Yaw - GetActorRotation().Yaw));
 
-		if (turnsRequired > updatesToDistance / 64.0f)
+		if (turnsRequired > updatesToDistance || turnsPerUpdate <= 0.0f)
 		{
-			throttleInput = CurrentThrottleInput / 2.0f;
+			if (turnsRequired <= 0.0f && turnsPerUpdate <= 0.0f)
+				turnsRequired = 99999999999.0f;
+			float diff = turnsRequired - (updatesToDistance);
+			float halfway = turnsRequired - (diff / 2.0f);
+			throttleInput = FMath::Clamp(CurrentThrottleInput - halfway, 0.1f, 1.0f);
+			//halfway *= distance;
+			//halfway /= DeltaTime;
+			//throttleInput = halfway;
 		}
 
 		if (rightDiff.Length() < leftDiff.Length())
@@ -162,6 +169,20 @@ FVector2f ACarPawn::CalculateInputs(FTransform target, ARacingLineManager* lineM
 			turnInput = -1.0f;
 		}
 	}
+	/*else
+	{
+		FVector rightPos = GetActorLocation() + (GetActorRightVector() * 10.0f);
+		FVector leftPos = GetActorLocation() + (GetActorRightVector() * -10.0f);
+
+		FVector rightDiff = target.GetLocation() - rightPos;
+		FVector leftDiff = target.GetLocation() - leftPos;
+
+		float distance = rawV.Length();
+		float distPerUpdate = CurrentSpeed * DeltaTime;
+		float updatesToDistance = distPerUpdate / distance;
+		float turnsPerUpdate = (CurrentTurnInput * TurnPower) * FMath::Clamp(((MaxSpeed - CurrentSpeed) / MaxSpeed), 0.0f, 1.0f) * DeltaTime;
+		float turnsRequired = abs(turnsPerUpdate / (UKismetMathLibrary::FindLookAtRotation(target.GetLocation(), afterTarget.GetLocation()).Yaw - GetActorRotation().Yaw));
+	}*/
 
 	/*FVector targetV = afterTarget.GetLocation() - target.GetLocation();
 	targetV.Normalize();
@@ -205,6 +226,36 @@ FVector2f ACarPawn::CalculateInputs(FTransform target, ARacingLineManager* lineM
 
 FVector2f ACarPawn::CalculateAvoidance(ARacingLineManager* lineManager, float DeltaTime)
 {
-	return FVector2f();
+	FVector2f inputs = FVector2f::Zero();
+
+	FRotator myRotation = GetActorRotation();
+
+	float leftDist = 0;
+	float rightDist = 0;
+
+	for (ACarPawn* otherCar : NearbyCars)
+	{
+		if (otherCar != nullptr && IsValid(otherCar))
+		{
+			FVector rightPos = GetActorLocation() + (GetActorRightVector() * 10.0f);
+			FVector leftPos = GetActorLocation() + (GetActorRightVector() * -10.0f);
+
+			leftDist += FVector::Dist(leftPos, otherCar->GetActorLocation());
+			rightDist += FVector::Dist(rightPos, otherCar->GetActorLocation());
+		}
+	}
+
+	if (FMath::Abs(leftDist - rightDist) <= 10.0f)
+	{
+		return FVector2f::Zero();
+	}
+	else if (leftDist > rightDist)
+	{
+		return FVector2f(CurrentThrottleInput, -0.1f);
+	}
+	else
+	{
+		return FVector2f(CurrentThrottleInput, 0.1f);
+	}
 }
 
