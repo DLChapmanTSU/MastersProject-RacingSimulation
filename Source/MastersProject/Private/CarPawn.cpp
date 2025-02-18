@@ -17,6 +17,9 @@ ACarPawn::ACarPawn()
 
 	BoxComponent = CreateDefaultSubobject<UBoxComponent>("BoxComponent");
 	BoxComponent->SetupAttachment(RootComponent);
+	BoxComponent->ComponentTags.AddUnique("AvoidanceBox");
+	BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &ACarPawn::OnEnterRange);
+	BoxComponent->OnComponentEndOverlap.AddDynamic(this, &ACarPawn::OnExitRange);
 }
 
 // Called when the game starts or when spawned
@@ -251,11 +254,39 @@ FVector2f ACarPawn::CalculateAvoidance(ARacingLineManager* lineManager, float De
 	}
 	else if (leftDist > rightDist)
 	{
-		return FVector2f(CurrentThrottleInput, -0.1f);
+		return FVector2f(CurrentThrottleInput, -0.75f);
 	}
 	else
 	{
-		return FVector2f(CurrentThrottleInput, 0.1f);
+		return FVector2f(CurrentThrottleInput, 0.75f);
+	}
+}
+
+void ACarPawn::OnEnterRange(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (!OtherComp->ComponentHasTag("AvoidanceBox"))
+	{
+		ACarPawn* otherCar = Cast<ACarPawn>(OtherActor);
+
+		if (otherCar != nullptr && IsValid(otherCar) && otherCar != this)
+		{
+			NearbyCars.AddUnique(otherCar);
+		}
+	}
+}
+
+void ACarPawn::OnExitRange(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex)
+{
+	if (!OtherComp->ComponentHasTag("AvoidanceBox"))
+	{
+		ACarPawn* otherCar = Cast<ACarPawn>(OtherActor);
+
+		if (otherCar != nullptr && IsValid(otherCar))
+		{
+			NearbyCars.Remove(otherCar);
+		}
 	}
 }
 
