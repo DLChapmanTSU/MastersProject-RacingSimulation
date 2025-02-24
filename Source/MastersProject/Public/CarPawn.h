@@ -43,7 +43,8 @@ protected:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = Car)
 		UBoxComponent* BoxComponent;
 
-	TArray<ACarPawn*> NearbyCars;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = Car)
+		TArray<ACarPawn*> NearbyCars;
 
 public:
 	// Called every frame

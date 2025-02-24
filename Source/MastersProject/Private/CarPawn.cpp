@@ -18,8 +18,8 @@ ACarPawn::ACarPawn()
 	BoxComponent = CreateDefaultSubobject<UBoxComponent>("BoxComponent");
 	BoxComponent->SetupAttachment(RootComponent);
 	BoxComponent->ComponentTags.AddUnique("AvoidanceBox");
-	BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &ACarPawn::OnEnterRange);
-	BoxComponent->OnComponentEndOverlap.AddDynamic(this, &ACarPawn::OnExitRange);
+	//BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &ACarPawn::OnEnterRange);
+	//BoxComponent->OnComponentEndOverlap.AddDynamic(this, &ACarPawn::OnExitRange);
 }
 
 // Called when the game starts or when spawned
@@ -39,12 +39,13 @@ void ACarPawn::Tick(float DeltaTime)
 	TArray<AActor*> OverlappingActors;
 	BoxComponent->GetOverlappingActors(OverlappingActors);
 
-	for (int i = 0; i > OverlappingActors.Num(); i++)
+	for (int i = 0; i < OverlappingActors.Num(); i++)
 	{
 		ACarPawn* otherCar = Cast<ACarPawn>(OverlappingActors[i]);
 		if (otherCar != nullptr && IsValid(otherCar))
 		{
-			NearbyCars.AddUnique(otherCar);
+			if (otherCar->GetUniqueID() != GetUniqueID())
+				NearbyCars.AddUnique(otherCar);
 		}
 	}
 
@@ -233,6 +234,8 @@ FVector2f ACarPawn::CalculateAvoidance(ARacingLineManager* lineManager, float De
 
 	FRotator myRotation = GetActorRotation();
 
+	FTransform target = lineManager->GetNextSplineTransform(GetActorLocation());
+
 	float leftDist = 0;
 	float rightDist = 0;
 
@@ -240,15 +243,19 @@ FVector2f ACarPawn::CalculateAvoidance(ARacingLineManager* lineManager, float De
 	{
 		if (otherCar != nullptr && IsValid(otherCar))
 		{
-			FVector rightPos = GetActorLocation() + (GetActorRightVector() * 10.0f);
-			FVector leftPos = GetActorLocation() + (GetActorRightVector() * -10.0f);
+			FVector otherPos = otherCar->GetActorLocation();
+			if (FVector::Dist(otherPos, target.GetLocation()) <= FVector::Dist(GetActorLocation(), target.GetLocation()))
+			{
+				FVector rightPos = GetActorLocation() + (GetActorRightVector() * 10.0f);
+				FVector leftPos = GetActorLocation() + (GetActorRightVector() * -10.0f);
 
-			leftDist += FVector::Dist(leftPos, otherCar->GetActorLocation());
-			rightDist += FVector::Dist(rightPos, otherCar->GetActorLocation());
+				leftDist += FVector::Dist(leftPos, otherCar->GetActorLocation());
+				rightDist += FVector::Dist(rightPos, otherCar->GetActorLocation());
+			}
 		}
 	}
 
-	if (FMath::Abs(leftDist - rightDist) <= 10.0f)
+	if (FMath::Abs(leftDist - rightDist) <= 0.0f)
 	{
 		return FVector2f::Zero();
 	}
@@ -271,7 +278,7 @@ void ACarPawn::OnEnterRange(UPrimitiveComponent* OverlappedComp, AActor* OtherAc
 
 		if (otherCar != nullptr && IsValid(otherCar) && otherCar != this)
 		{
-			NearbyCars.AddUnique(otherCar);
+			NearbyCars.Add(otherCar);
 		}
 	}
 }
