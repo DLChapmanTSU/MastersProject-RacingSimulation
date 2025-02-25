@@ -40,6 +40,9 @@ public:
 		FTransform GetSplinePoint(int i);
 
 	UFUNCTION(BlueprintCallable)
+		FVector GetNearestRightVector(FVector position);
+
+	UFUNCTION(BlueprintCallable)
 		int GetSplinePointCount();
 
 	USplineComponent* GetSpline() { return Spline; }

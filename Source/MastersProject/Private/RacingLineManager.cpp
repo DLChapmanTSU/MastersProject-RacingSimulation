@@ -60,6 +60,11 @@ FTransform ARacingLineManager::GetSplinePoint(int i)
 	return Spline->GetTransformAtSplinePoint(i, ESplineCoordinateSpace::World);
 }
 
+FVector ARacingLineManager::GetNearestRightVector(FVector position)
+{
+	return Spline->GetRightVectorAtDistanceAlongSpline(Spline->GetDistanceAlongSplineAtLocation(position, ESplineCoordinateSpace::World), ESplineCoordinateSpace::World);
+}
+
 int ARacingLineManager::GetSplinePointCount()
 {
 	return Spline->GetNumberOfSplinePoints();

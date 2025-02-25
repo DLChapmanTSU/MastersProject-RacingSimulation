@@ -94,40 +94,6 @@ FVector2f ACarPawn::CalculateInputs(FTransform target, ARacingLineManager* lineM
 	USplineComponent* spline = lineManager->GetSpline();
 	FTransform afterTarget = lineManager->GetNextNextSplineTransform(GetActorLocation());
 
-	/*float targetDist = spline->GetDistanceAlongSplineAtLocation(target.GetLocation(), ESplineCoordinateSpace::World);
-	float currentDist = spline->GetDistanceAlongSplineAtLocation(GetActorLocation(), ESplineCoordinateSpace::World);
-
-	float distToTarget = targetDist - currentDist;
-
-	if (distToTarget < 0.0f)
-	{
-		distToTarget = targetDist + (spline->GetSplineLength() - currentDist);
-	}
-
-	float turnToTarget = abs(abs(afterTarget.Rotator().Yaw) - abs(spline->FindTransformClosestToWorldLocation(GetActorLocation(), ESplineCoordinateSpace::World).Rotator().Yaw));
-
-	float distFromPointToPoint = spline->GetDistanceAlongSplineAtLocation(afterTarget.GetLocation(), ESplineCoordinateSpace::World) - targetDist;
-	float updatesAtCurrentSpeed = (CurrentSpeed * DeltaTime) / distFromPointToPoint;
-
-	float updatesAtMaxSpeed = (MaxSpeed * DeltaTime) / distToTarget;
-	float updatesAtMaxTurn = (TurnPower * DeltaTime) / turnToTarget;
-
-	float throttleInput = 0.0f;
-	float turnInput = 0.0f;
-
-	if (updatesAtCurrentSpeed < updatesAtMaxTurn && updatesAtCurrentSpeed != 0.0f)
-	{
-		throttleInput = throttleInput - MaxAcceleration;
-		if (currentDist > 25.0f)
-			turnInput = 1.0f;
-		else
-			turnInput = 0.0f;
-	}
-	else
-	{
-		throttleInput = 1.0f;
-	}*/
-
 	float throttleInput = 1.0f;
 	float turnInput = 0.0f;
 
@@ -159,9 +125,6 @@ FVector2f ACarPawn::CalculateInputs(FTransform target, ARacingLineManager* lineM
 			float diff = turnsRequired - (updatesToDistance);
 			float halfway = turnsRequired - (diff / 2.0f);
 			throttleInput = FMath::Clamp(CurrentThrottleInput - halfway, 0.1f, 1.0f);
-			//halfway *= distance;
-			//halfway /= DeltaTime;
-			//throttleInput = halfway;
 		}
 
 		if (rightDiff.Length() < leftDiff.Length())
@@ -173,53 +136,6 @@ FVector2f ACarPawn::CalculateInputs(FTransform target, ARacingLineManager* lineM
 			turnInput = -1.0f;
 		}
 	}
-	/*else
-	{
-		FVector rightPos = GetActorLocation() + (GetActorRightVector() * 10.0f);
-		FVector leftPos = GetActorLocation() + (GetActorRightVector() * -10.0f);
-
-		FVector rightDiff = target.GetLocation() - rightPos;
-		FVector leftDiff = target.GetLocation() - leftPos;
-
-		float distance = rawV.Length();
-		float distPerUpdate = CurrentSpeed * DeltaTime;
-		float updatesToDistance = distPerUpdate / distance;
-		float turnsPerUpdate = (CurrentTurnInput * TurnPower) * FMath::Clamp(((MaxSpeed - CurrentSpeed) / MaxSpeed), 0.0f, 1.0f) * DeltaTime;
-		float turnsRequired = abs(turnsPerUpdate / (UKismetMathLibrary::FindLookAtRotation(target.GetLocation(), afterTarget.GetLocation()).Yaw - GetActorRotation().Yaw));
-	}*/
-
-	/*FVector targetV = afterTarget.GetLocation() - target.GetLocation();
-	targetV.Normalize();
-	float targetAngle = FMath::Acos(FVector::DotProduct(targetV, v) / (v.Length() * targetV.Length()));
-
-	if (targetAngle > 0.1f)
-	{
-		FVector rightPos = GetActorLocation() + (GetActorRightVector() * 10.0f);
-		FVector leftPos = GetActorLocation() + (GetActorRightVector() * -10.0f);
-
-		FVector rightDiff = target.GetLocation() - rightPos;
-		FVector leftDiff = target.GetLocation() - leftPos;
-
-		float distance = targetV.Length();
-		float distPerUpdate = CurrentSpeed * DeltaTime;
-		float updatesToDistance = distPerUpdate / distance;
-		float turnsPerUpdate = (CurrentTurnInput * TurnPower) * (CurrentSpeed / MaxSpeed) * DeltaTime;
-		float turnsRequired = turnsPerUpdate / (target.Rotator().Yaw - GetActorRotation().Yaw);
-
-		if (turnsRequired * 100.0f > updatesToDistance)
-		{
-			throttleInput = CurrentThrottleInput / 2.0f;
-		}
-
-		if (rightDiff.Length() < leftDiff.Length())
-		{
-			turnInput = 1.0f;
-		}
-		else
-		{
-			turnInput = -1.0f;
-		}
-	}*/
 
 	FVector2f inputs = FVector2f::Zero();
 	inputs.X = throttleInput;
@@ -230,11 +146,19 @@ FVector2f ACarPawn::CalculateInputs(FTransform target, ARacingLineManager* lineM
 
 FVector2f ACarPawn::CalculateAvoidance(ARacingLineManager* lineManager, float DeltaTime)
 {
+	if (NearbyCars.Num() == 0)
+		return FVector2f::Zero();
+	
 	FVector2f inputs = FVector2f::Zero();
 
 	FRotator myRotation = GetActorRotation();
 
 	FTransform target = lineManager->GetNextSplineTransform(GetActorLocation());
+
+	ACarPawn* leftmostCar = nullptr;
+	ACarPawn* rightmostCar = nullptr;
+	float leftmostDist = -1.0f;
+	float rightmostDist = -1.0f;
 
 	float leftDist = 0;
 	float rightDist = 0;
@@ -244,28 +168,52 @@ FVector2f ACarPawn::CalculateAvoidance(ARacingLineManager* lineManager, float De
 		if (otherCar != nullptr && IsValid(otherCar))
 		{
 			FVector otherPos = otherCar->GetActorLocation();
-			if (FVector::Dist(otherPos, target.GetLocation()) <= FVector::Dist(GetActorLocation(), target.GetLocation()))
+			FVector forwardPos = GetActorLocation() + (GetActorForwardVector() * 10.0f);
+			FVector backwardPos = GetActorLocation() - (GetActorForwardVector() * 10.0f);
+			if (FVector::Dist(otherPos, forwardPos) <= FVector::Dist(otherPos, backwardPos))
 			{
 				FVector rightPos = GetActorLocation() + (GetActorRightVector() * 10.0f);
 				FVector leftPos = GetActorLocation() + (GetActorRightVector() * -10.0f);
 
-				leftDist += FVector::Dist(leftPos, otherCar->GetActorLocation());
-				rightDist += FVector::Dist(rightPos, otherCar->GetActorLocation());
+				float carLeftDist = FVector::Dist(leftPos, otherCar->GetActorLocation());
+				float carRightDist = FVector::Dist(rightPos, otherCar->GetActorLocation());
+
+				leftDist += carLeftDist;
+				rightDist += carRightDist;
+
+				if (carLeftDist > leftmostDist)
+				{
+					leftmostDist = carLeftDist;
+					leftmostCar = otherCar;
+				}
+
+				if (carRightDist > rightmostDist)
+				{
+					rightmostDist = carRightDist;
+					rightmostCar = otherCar;
+				}
 			}
 		}
 	}
 
-	if (FMath::Abs(leftDist - rightDist) <= 0.0f)
-	{
+	if (leftDist == 0 && rightDist == 0)
 		return FVector2f::Zero();
-	}
-	else if (leftDist > rightDist)
+
+	FVector overtakeTarget = GetActorLocation();
+	
+	if (leftDist > rightDist || FMath::Abs(leftDist - rightDist) <= 0.0f)
 	{
-		return FVector2f(CurrentThrottleInput, -0.75f);
+		if (leftmostCar != nullptr && IsValid(leftmostCar))
+		{
+			overtakeTarget = leftmostCar->GetActorLocation() + (lineManager->GetNearestRightVector(leftmostCar->GetActorLocation()) * -30.0f);
+		}
 	}
 	else
 	{
-		return FVector2f(CurrentThrottleInput, 0.75f);
+		if (rightmostCar != nullptr && IsValid(rightmostCar))
+		{
+			overtakeTarget = rightmostCar->GetActorLocation() + (lineManager->GetNearestRightVector(rightmostCar->GetActorLocation()) * 30.0f);
+		}
 	}
 }
 
