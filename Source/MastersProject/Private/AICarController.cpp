@@ -34,7 +34,7 @@ void AAICarController::Tick(float DeltaTime)
 	if (CarPawn != nullptr && IsValid(CarPawn) && RacingLineManager != nullptr && IsValid(RacingLineManager))
 	{
 		FTransform targetTransform = RacingLineManager->GetSplinePoint(NextSplineTarget);
-		FVector diff = targetTransform.GetLocation() - CarPawn->GetActorLocation();
+		/*FVector diff = targetTransform.GetLocation() - CarPawn->GetActorLocation();
 		if (diff.Length() <= 100.0f)
 		{
 			NextSplineTarget++;
@@ -42,7 +42,7 @@ void AAICarController::Tick(float DeltaTime)
 				NextSplineTarget = 0;
 
 			targetTransform = RacingLineManager->GetSplinePoint(NextSplineTarget);
-		}
+		}*/
 		
 		if (targetTransform.GetRotation() == CarPawn->GetActorRotation().Quaternion())
 		{
@@ -62,5 +62,12 @@ void AAICarController::Tick(float DeltaTime)
 			CarPawn->SetTurnInput(inputs.Y);
 		}
 	}
+}
+
+void AAICarController::UpdateWaypointTarget()
+{
+	NextSplineTarget++;
+	if (NextSplineTarget >= RacingLineManager->GetSplinePointCount())
+		NextSplineTarget = 0;
 }
 
