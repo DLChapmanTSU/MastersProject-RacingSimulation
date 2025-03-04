@@ -52,9 +52,12 @@ void AAICarController::Tick(float DeltaTime)
 		else
 		{
 			FRotator rotatorDiff = targetTransform.Rotator() - CarPawn->GetActorRotation();
+			FVector2f inputs;
 
-			FVector2f inputs = CarPawn->CalculateInputs(targetTransform, RacingLineManager, DeltaTime);
-			inputs.Y += CarPawn->CalculateAvoidance(RacingLineManager, DeltaTime).Y;
+			if (!CarPawn->HasCarsToAvoid())
+				inputs = CarPawn->CalculateInputs(targetTransform, RacingLineManager, DeltaTime);
+			else
+				inputs = CarPawn->CalculateAvoidance(RacingLineManager, DeltaTime);
 			CarPawn->SetThrottleInput(inputs.X);
 			CarPawn->SetTurnInput(inputs.Y);
 		}

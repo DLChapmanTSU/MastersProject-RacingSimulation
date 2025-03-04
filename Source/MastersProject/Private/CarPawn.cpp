@@ -35,17 +35,25 @@ void ACarPawn::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	NearbyCars.Empty();
+	TArray<UPrimitiveComponent*> OverlappingComponents;
+	BoxComponent->GetOverlappingComponents(OverlappingComponents);
 
-	TArray<AActor*> OverlappingActors;
-	BoxComponent->GetOverlappingActors(OverlappingActors);
-
-	for (int i = 0; i < OverlappingActors.Num(); i++)
+	for (int i = 0; i < OverlappingComponents.Num(); i++)
 	{
-		ACarPawn* otherCar = Cast<ACarPawn>(OverlappingActors[i]);
-		if (otherCar != nullptr && IsValid(otherCar))
+		if (OverlappingComponents[i] != nullptr && IsValid(OverlappingComponents[i]))
 		{
-			if (otherCar->GetUniqueID() != GetUniqueID())
-				NearbyCars.AddUnique(otherCar);
+			if (OverlappingComponents[i]->GetOwner() != nullptr && IsValid(OverlappingComponents[i]->GetOwner()))
+			{
+				if (!OverlappingComponents[i]->ComponentHasTag("AvoidanceBox"))
+				{
+					ACarPawn* otherCar = Cast<ACarPawn>(OverlappingComponents[i]->GetOwner());
+					if (otherCar != nullptr && IsValid(otherCar))
+					{
+						if (otherCar->GetUniqueID() != GetUniqueID())
+							NearbyCars.AddUnique(otherCar);
+					}
+				}
+			}
 		}
 	}
 
@@ -167,37 +175,40 @@ FVector2f ACarPawn::CalculateAvoidance(ARacingLineManager* lineManager, float De
 	{
 		if (otherCar != nullptr && IsValid(otherCar))
 		{
-			FVector otherPos = otherCar->GetActorLocation();
-			FVector forwardPos = GetActorLocation() + (GetActorForwardVector() * 10.0f);
-			FVector backwardPos = GetActorLocation() - (GetActorForwardVector() * 10.0f);
-			if (FVector::Dist(otherPos, forwardPos) <= FVector::Dist(otherPos, backwardPos))
+			if (CurrentSpeed - otherCar->GetCurrentSpeed() >= 10.0f)
 			{
-				FVector rightPos = GetActorLocation() + (GetActorRightVector() * 10.0f);
-				FVector leftPos = GetActorLocation() + (GetActorRightVector() * -10.0f);
-
-				float carLeftDist = FVector::Dist(leftPos, otherCar->GetActorLocation());
-				float carRightDist = FVector::Dist(rightPos, otherCar->GetActorLocation());
-
-				leftDist += carLeftDist;
-				rightDist += carRightDist;
-
-				if (carLeftDist > leftmostDist)
+				FVector otherPos = otherCar->GetActorLocation();
+				FVector forwardPos = GetActorLocation() + (GetActorForwardVector() * 10.0f);
+				FVector backwardPos = GetActorLocation() - (GetActorForwardVector() * 10.0f);
+				if (FVector::Dist(otherPos, forwardPos) <= FVector::Dist(otherPos, backwardPos))
 				{
-					leftmostDist = carLeftDist;
-					leftmostCar = otherCar;
-				}
+					FVector rightPos = GetActorLocation() + (GetActorRightVector() * 10.0f);
+					FVector leftPos = GetActorLocation() + (GetActorRightVector() * -10.0f);
 
-				if (carRightDist > rightmostDist)
-				{
-					rightmostDist = carRightDist;
-					rightmostCar = otherCar;
+					float carLeftDist = FVector::Dist(leftPos, otherCar->GetActorLocation());
+					float carRightDist = FVector::Dist(rightPos, otherCar->GetActorLocation());
+
+					leftDist += carLeftDist;
+					rightDist += carRightDist;
+
+					if (carLeftDist > leftmostDist)
+					{
+						leftmostDist = carLeftDist;
+						leftmostCar = otherCar;
+					}
+
+					if (carRightDist > rightmostDist)
+					{
+						rightmostDist = carRightDist;
+						rightmostCar = otherCar;
+					}
 				}
 			}
 		}
 	}
 
 	if (leftDist == 0 && rightDist == 0)
-		return FVector2f::Zero();
+		return FVector2f(1.0f, 0.0f);
 
 	FVector overtakeTarget = GetActorLocation();
 	
@@ -215,10 +226,70 @@ FVector2f ACarPawn::CalculateAvoidance(ARacingLineManager* lineManager, float De
 			overtakeTarget = rightmostCar->GetActorLocation() + (lineManager->GetNearestRightVector(rightmostCar->GetActorLocation()) * 30.0f);
 		}
 	}
+
+	float throttleInput = 1.0f;
+	float turnInput = 0.0f;
+
+	FVector u = GetActorForwardVector();
+	FVector v = overtakeTarget - GetActorLocation();
+	FVector rawV = v;
+	v.Normalize();
+
+	float angle = FMath::Acos(FVector::DotProduct(v, u) / (u.Length() * v.Length()));
+
+	if (angle > 0.1f)
+	{
+		FVector rightPos = GetActorLocation() + (GetActorRightVector() * 10.0f);
+		FVector leftPos = GetActorLocation() + (GetActorRightVector() * -10.0f);
+
+		FVector rightDiff = overtakeTarget - rightPos;
+		FVector leftDiff = overtakeTarget - leftPos;
+
+		float distance = rawV.Length();
+		float distPerUpdate = CurrentSpeed * DeltaTime;
+		float updatesToDistance = distPerUpdate / distance;
+		float turnsPerUpdate = (CurrentTurnInput * TurnPower) * FMath::Clamp(((MaxSpeed - CurrentSpeed) / MaxSpeed), 0.1f, 1.0f) * DeltaTime;
+		float turnsRequired = abs(turnsPerUpdate / (UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), overtakeTarget).Yaw - GetActorRotation().Yaw));
+
+		if (turnsRequired > updatesToDistance || turnsPerUpdate <= 0.0f)
+		{
+			if (turnsRequired <= 0.0f && turnsPerUpdate <= 0.0f)
+				turnsRequired = 99999999999.0f;
+			float diff = turnsRequired - (updatesToDistance);
+			float halfway = turnsRequired - (diff / 2.0f);
+			//throttleInput = FMath::Clamp(CurrentThrottleInput - halfway, 0.1f, 1.0f);
+			throttleInput = CurrentThrottleInput;
+		}
+
+		if (rightDiff.Length() < leftDiff.Length())
+		{
+			turnInput = 1.0f;
+		}
+		else
+		{
+			turnInput = -1.0f;
+		}
+	}
+
+	inputs = FVector2f::Zero();
+	inputs.X = throttleInput;
+	inputs.Y = turnInput;
+	
+	return inputs;
+}
+
+bool ACarPawn::HasCarsToAvoid()
+{
+	return !NearbyCars.IsEmpty();
+}
+
+float ACarPawn::GetCurrentSpeed()
+{
+	return CurrentSpeed;
 }
 
 void ACarPawn::OnEnterRange(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+                            int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (!OtherComp->ComponentHasTag("AvoidanceBox"))
 	{

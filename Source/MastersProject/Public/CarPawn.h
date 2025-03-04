@@ -57,6 +57,8 @@ public:
 	void SetTurnInput(float Input);
 	FVector2f CalculateInputs(FTransform target, ARacingLineManager* lineManager, float DeltaTime);
 	FVector2f CalculateAvoidance(ARacingLineManager* lineManager, float DeltaTime);
+	bool HasCarsToAvoid();
+	float GetCurrentSpeed();
 
 	UFUNCTION()
 	void OnEnterRange(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
