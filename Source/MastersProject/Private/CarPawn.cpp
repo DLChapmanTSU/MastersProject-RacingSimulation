@@ -26,7 +26,18 @@ ACarPawn::ACarPawn()
 void ACarPawn::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	DecisionTree = NewObject<UCarDecisionTree>();
+
+	TArray<int> conditions;
+	conditions.Add(0);
+	//conditions.Add(1);
+	DecisionTree->CreateChildAtCurrent(conditions, "Root");
+	conditions.Empty();
+	DecisionTree->CreateChildAtCurrent(conditions, "Hotlap");
+	DecisionTree->CreateChildAtCurrent(conditions, "Overtake");
+
+	DecisionTree->SetCar(this);
 }
 
 // Called every frame
@@ -283,9 +294,31 @@ bool ACarPawn::HasCarsToAvoid()
 	return !NearbyCars.IsEmpty();
 }
 
+float ACarPawn::GetSlowestNearbySpeed()
+{
+	float slowest = 999999999.0f;
+	for (ACarPawn* otherCar : NearbyCars)
+	{
+		if (otherCar != nullptr && IsValid(otherCar))
+		{
+			if (otherCar->GetCurrentSpeed() < slowest)
+				slowest = otherCar->GetCurrentSpeed();
+		}
+	}
+
+	return slowest;
+}
+
 float ACarPawn::GetCurrentSpeed()
 {
 	return CurrentSpeed;
+}
+
+FString ACarPawn::DecideNewTask()
+{
+	FString task = DecisionTree->MakeDecision();
+	DecisionTree->ResetCurrent();
+	return task;
 }
 
 void ACarPawn::OnEnterRange(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,

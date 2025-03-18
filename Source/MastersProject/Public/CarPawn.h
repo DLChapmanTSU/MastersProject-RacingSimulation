@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "CarDecisionTree.h"
 #include "GameFramework/Pawn.h"
 #include "RacingLineManager.h"
 #include "Components/BoxComponent.h"
@@ -46,6 +47,8 @@ protected:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = Car)
 		TArray<ACarPawn*> NearbyCars;
 
+	UCarDecisionTree* DecisionTree;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -58,7 +61,9 @@ public:
 	FVector2f CalculateInputs(FTransform target, ARacingLineManager* lineManager, float DeltaTime);
 	FVector2f CalculateAvoidance(ARacingLineManager* lineManager, float DeltaTime);
 	bool HasCarsToAvoid();
+	float GetSlowestNearbySpeed();
 	float GetCurrentSpeed();
+	FString DecideNewTask();
 
 	UFUNCTION()
 	void OnEnterRange(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,

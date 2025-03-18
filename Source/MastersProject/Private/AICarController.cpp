@@ -43,8 +43,10 @@ void AAICarController::Tick(float DeltaTime)
 
 			targetTransform = RacingLineManager->GetSplinePoint(NextSplineTarget);
 		}*/
+
+		FString task = CarPawn->DecideNewTask();
 		
-		if (targetTransform.GetRotation() == CarPawn->GetActorRotation().Quaternion())
+		if (targetTransform.GetRotation() == CarPawn->GetActorRotation().Quaternion() && task == "HotLap")
 		{
 			CarPawn->SetThrottleInput(1.0f);
 			CarPawn->SetTurnInput(0.0f);
@@ -54,20 +56,33 @@ void AAICarController::Tick(float DeltaTime)
 			FRotator rotatorDiff = targetTransform.Rotator() - CarPawn->GetActorRotation();
 			FVector2f inputs;
 
-			if (!CarPawn->HasCarsToAvoid())
+			if (task == "HotLap")
+			{
 				inputs = CarPawn->CalculateInputs(targetTransform, RacingLineManager, DeltaTime);
-			else
+			}
+			else if (task == "Overtake")
+			{
 				inputs = CarPawn->CalculateAvoidance(RacingLineManager, DeltaTime);
+			}
+			else
+			{
+				inputs = CarPawn->CalculateInputs(targetTransform, RacingLineManager, DeltaTime);
+			}
+
+			//if (task == "HotLap")
+			//	inputs = CarPawn->CalculateInputs(targetTransform, RacingLineManager, DeltaTime);
+			//else
+			//	inputs = CarPawn->CalculateAvoidance(RacingLineManager, DeltaTime);
 			CarPawn->SetThrottleInput(inputs.X);
 			CarPawn->SetTurnInput(inputs.Y);
 		}
 	}
 }
 
-void AAICarController::UpdateWaypointTarget()
+void AAICarController::UpdateWaypointTarget(int target)
 {
-	NextSplineTarget++;
-	if (NextSplineTarget >= RacingLineManager->GetSplinePointCount())
+	NextSplineTarget = target;
+	if (NextSplineTarget >= RacingLineManager->GetSplinePointCount() || NextSplineTarget < 0)
 		NextSplineTarget = 0;
 }
 

@@ -32,5 +32,5 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintCallable)
-		void UpdateWaypointTarget();
+		void UpdateWaypointTarget(int target);
 };
