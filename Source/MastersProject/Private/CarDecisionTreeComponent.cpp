@@ -135,6 +135,8 @@ bool UCarDecisionTreeComponent::CheckCondition(int condition)
 		return IsLowOnFuel();
 	case 4:
 		return IsNearEndOfRace();
+	case 5:
+		return IsNearPits();
 	default:
 		return false;
 	}
@@ -172,5 +174,13 @@ bool UCarDecisionTreeComponent::IsLowOnFuel()
 
 bool UCarDecisionTreeComponent::IsNearEndOfRace()
 {
+	return false;
+}
+
+bool UCarDecisionTreeComponent::IsNearPits()
+{
+	ACarPawn* car = Cast<ACarPawn>(GetOwner());
+	if (car != nullptr && IsValid(car))
+		return car->GetCurrentTarget() == SplineTargetAfterPits;
 	return false;
 }

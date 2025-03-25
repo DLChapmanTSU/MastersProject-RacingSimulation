@@ -28,11 +28,13 @@ protected:
 	bool IsFollowingPit = false;
 
 	int NextSplineTarget = 1;
-	int PitReturnTarget = 1;
+	int PitReturnTarget = 2;
 
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	int GetNextSplineTarget();
 
 	UFUNCTION(BlueprintCallable)
 		void UpdateWaypointTarget(int target);

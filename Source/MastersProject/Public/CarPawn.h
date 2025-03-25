@@ -43,6 +43,9 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = Car)
 		float FuelMaxDecay = 0.1f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = Car)
+		float RefuelThreshold = 20.0f;
 		
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = Car)
@@ -75,6 +78,8 @@ public:
 	float GetCurrentSpeed();
 	FString DecideNewTask();
 	bool GetIsLowOnFuel();
+	void Refuel();
+	int GetCurrentTarget();
 
 	UFUNCTION()
 	void OnEnterRange(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,

@@ -43,9 +43,9 @@ void AAICarController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (CarPawn != nullptr && IsValid(CarPawn) && RacingLineManager != nullptr && IsValid(RacingLineManager))
+	if (CarPawn != nullptr && IsValid(CarPawn) && RacingLineManager != nullptr && IsValid(RacingLineManager) && PitLineManager != nullptr && IsValid(PitLineManager))
 	{
-		FTransform targetTransform = RacingLineManager->GetSplinePoint(NextSplineTarget);
+		FTransform targetTransform = IsFollowingPit ? PitLineManager->GetSplinePoint(NextSplineTarget) : RacingLineManager->GetSplinePoint(NextSplineTarget);
 		/*FVector diff = targetTransform.GetLocation() - CarPawn->GetActorLocation();
 		if (diff.Length() <= 100.0f)
 		{
@@ -70,19 +70,27 @@ void AAICarController::Tick(float DeltaTime)
 
 			if (task == "HotLap")
 			{
+				IsFollowingPit = false;
 				inputs = CarPawn->CalculateInputs(targetTransform, RacingLineManager, DeltaTime);
 			}
 			else if (task == "Overtake")
 			{
+				IsFollowingPit = false;
 				inputs = CarPawn->CalculateAvoidance(RacingLineManager, DeltaTime);
 			}
 			else if (task == "Pit")
 			{
-				IsFollowingPit = true;
+				if (IsFollowingPit == false)
+				{
+					IsFollowingPit = true;
+					NextSplineTarget = 0;
+				}
+				
 				inputs = CarPawn->CalculateInputs(targetTransform, PitLineManager, DeltaTime);
 			}
 			else
 			{
+				IsFollowingPit = false;
 				inputs = CarPawn->CalculateInputs(targetTransform, RacingLineManager, DeltaTime);
 			}
 
@@ -96,6 +104,11 @@ void AAICarController::Tick(float DeltaTime)
 	}
 }
 
+int AAICarController::GetNextSplineTarget()
+{
+	return NextSplineTarget;
+}
+
 void AAICarController::UpdateWaypointTarget(int target)
 {
 	NextSplineTarget = target;
@@ -106,6 +119,7 @@ void AAICarController::UpdateWaypointTarget(int target)
 		{
 			NextSplineTarget = PitReturnTarget;
 			IsFollowingPit = false;
+			CarPawn->Refuel();
 		}
 	}
 	else

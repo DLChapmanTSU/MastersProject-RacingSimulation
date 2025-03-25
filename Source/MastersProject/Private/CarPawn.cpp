@@ -2,6 +2,9 @@
 
 
 #include "CarPawn.h"
+
+#include "AICarController.h"
+#include "AIController.h"
 #include "Components/SplineComponent.h"
 #include "CarDecisionTreeComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -152,7 +155,8 @@ FVector2f ACarPawn::CalculateInputs(FTransform target, ARacingLineManager* lineM
 		float distPerUpdate = CurrentSpeed * DeltaTime;
 		float updatesToDistance = distPerUpdate / distance;
 		float turnsPerUpdate = (CurrentTurnInput * TurnPower) * FMath::Clamp(((MaxSpeed - CurrentSpeed) / MaxSpeed), 0.1f, 1.0f) * DeltaTime;
-		float turnsRequired = abs(turnsPerUpdate / (UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), target.GetLocation()).Yaw - GetActorRotation().Yaw));
+		//float turnsRequired = abs(turnsPerUpdate / (UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), target.GetLocation()).Yaw - GetActorRotation().Yaw));
+		float turnsRequired = abs(turnsPerUpdate / angle);
 
 		if (turnsRequired > updatesToDistance || turnsPerUpdate <= 0.0f)
 		{
@@ -277,7 +281,7 @@ FVector2f ACarPawn::CalculateAvoidance(ARacingLineManager* lineManager, float De
 		float distPerUpdate = CurrentSpeed * DeltaTime;
 		float updatesToDistance = distPerUpdate / distance;
 		float turnsPerUpdate = (CurrentTurnInput * TurnPower) * FMath::Clamp(((MaxSpeed - CurrentSpeed) / MaxSpeed), 0.1f, 1.0f) * DeltaTime;
-		float turnsRequired = abs(turnsPerUpdate / (UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), overtakeTarget).Yaw - GetActorRotation().Yaw));
+		float turnsRequired = abs(turnsPerUpdate / angle);
 
 		if (turnsRequired > updatesToDistance || turnsPerUpdate <= 0.0f)
 		{
@@ -340,7 +344,26 @@ FString ACarPawn::DecideNewTask()
 
 bool ACarPawn::GetIsLowOnFuel()
 {
-	return (CurrentFuel / MaxFuel) <= 0.1f;
+	return CurrentFuel <= RefuelThreshold;
+}
+
+void ACarPawn::Refuel()
+{
+	CurrentFuel = MaxFuel;
+}
+
+int ACarPawn::GetCurrentTarget()
+{
+	AController* controller = GetController();
+	if (controller != nullptr && IsValid(controller))
+	{
+		AAICarController* carCtr = Cast<AAICarController>(controller);
+		if (carCtr != nullptr && IsValid(carCtr))
+		{
+			return carCtr->GetNextSplineTarget();
+		}
+	}
+	return -1;
 }
 
 void ACarPawn::OnEnterRange(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,

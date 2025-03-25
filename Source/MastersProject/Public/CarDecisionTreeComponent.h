@@ -27,6 +27,9 @@ public:
 protected:
 	TArray<FDecisionTreeNode> Nodes;
 	int Current = 0;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = SplineInfo)
+		int SplineTargetAfterPits = 0;
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
@@ -46,4 +49,5 @@ public:
 	bool IsNearACorner();
 	bool IsLowOnFuel();
 	bool IsNearEndOfRace();
+	bool IsNearPits();
 };
