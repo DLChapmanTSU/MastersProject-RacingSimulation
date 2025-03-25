@@ -23,7 +23,19 @@ void AAICarController::BeginPlay()
 	TArray<AActor*> found;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ARacingLineManager::StaticClass(), found);
 	if (found.Num() > 0)
-		RacingLineManager = Cast<ARacingLineManager>(found[0]);
+	{
+		for (AActor* actor : found)
+		{
+			if (actor->ActorHasTag("IsPit"))
+			{
+				PitLineManager = Cast<ARacingLineManager>(actor);
+			}
+			else
+			{
+				RacingLineManager = Cast<ARacingLineManager>(actor);
+			}
+		}
+	}
 }
 
 // Called every frame
@@ -64,6 +76,11 @@ void AAICarController::Tick(float DeltaTime)
 			{
 				inputs = CarPawn->CalculateAvoidance(RacingLineManager, DeltaTime);
 			}
+			else if (task == "Pit")
+			{
+				IsFollowingPit = true;
+				inputs = CarPawn->CalculateInputs(targetTransform, PitLineManager, DeltaTime);
+			}
 			else
 			{
 				inputs = CarPawn->CalculateInputs(targetTransform, RacingLineManager, DeltaTime);
@@ -82,7 +99,19 @@ void AAICarController::Tick(float DeltaTime)
 void AAICarController::UpdateWaypointTarget(int target)
 {
 	NextSplineTarget = target;
-	if (NextSplineTarget >= RacingLineManager->GetSplinePointCount() || NextSplineTarget < 0)
-		NextSplineTarget = 0;
+
+	if (IsFollowingPit)
+	{
+		if (NextSplineTarget >= PitLineManager->GetSplinePointCount() || NextSplineTarget < 0)
+		{
+			NextSplineTarget = PitReturnTarget;
+			IsFollowingPit = false;
+		}
+	}
+	else
+	{
+		if (NextSplineTarget >= RacingLineManager->GetSplinePointCount() || NextSplineTarget < 0)
+			NextSplineTarget = 0;
+	}
 }
 

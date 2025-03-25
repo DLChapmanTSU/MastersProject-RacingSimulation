@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CarDecisionTree.h"
+#include "CarDecisionTreeComponent.h"
 #include "GameFramework/Pawn.h"
 #include "RacingLineManager.h"
 #include "Components/BoxComponent.h"
@@ -39,6 +39,13 @@ protected:
 		float CurrentThrottleInput;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = Car)
+		float MaxFuel = 100.0f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = Car)
+		float FuelMaxDecay = 0.1f;
+		
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = Car)
 		UStaticMeshComponent* StaticMesh;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = Car)
@@ -47,7 +54,10 @@ protected:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = Car)
 		TArray<ACarPawn*> NearbyCars;
 
-	UCarDecisionTree* DecisionTree;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess = true), Category = Car)
+		UCarDecisionTreeComponent* DecisionTree;
+
+	float CurrentFuel;
 
 public:
 	// Called every frame
@@ -64,6 +74,7 @@ public:
 	float GetSlowestNearbySpeed();
 	float GetCurrentSpeed();
 	FString DecideNewTask();
+	bool GetIsLowOnFuel();
 
 	UFUNCTION()
 	void OnEnterRange(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,

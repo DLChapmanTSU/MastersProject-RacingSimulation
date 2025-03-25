@@ -24,8 +24,11 @@ protected:
 
 	ACarPawn* CarPawn;
 	ARacingLineManager* RacingLineManager;
+	ARacingLineManager* PitLineManager;
+	bool IsFollowingPit = false;
 
 	int NextSplineTarget = 1;
+	int PitReturnTarget = 1;
 
 public:
 	// Called every frame

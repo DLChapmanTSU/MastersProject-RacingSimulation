@@ -3,6 +3,7 @@
 
 #include "CarPawn.h"
 #include "Components/SplineComponent.h"
+#include "CarDecisionTreeComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
 
@@ -20,6 +21,8 @@ ACarPawn::ACarPawn()
 	BoxComponent->ComponentTags.AddUnique("AvoidanceBox");
 	//BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &ACarPawn::OnEnterRange);
 	//BoxComponent->OnComponentEndOverlap.AddDynamic(this, &ACarPawn::OnExitRange);
+
+	DecisionTree = CreateDefaultSubobject<UCarDecisionTreeComponent>("DecisionTree");
 }
 
 // Called when the game starts or when spawned
@@ -27,17 +30,21 @@ void ACarPawn::BeginPlay()
 {
 	Super::BeginPlay();
 
-	DecisionTree = NewObject<UCarDecisionTree>();
-
 	TArray<int> conditions;
-	conditions.Add(0);
-	//conditions.Add(1);
+	conditions.Add(3);
 	DecisionTree->CreateChildAtCurrent(conditions, "Root");
+	conditions.Empty();
+	conditions.Add(0);
+	conditions.Add(1);
+	int next = DecisionTree->CreateChildAtCurrent(conditions, "ERROR");
+	DecisionTree->SetCurrent(next);
 	conditions.Empty();
 	DecisionTree->CreateChildAtCurrent(conditions, "Hotlap");
 	DecisionTree->CreateChildAtCurrent(conditions, "Overtake");
-
-	DecisionTree->SetCar(this);
+	DecisionTree->SetCurrent(0);
+	DecisionTree->CreateChildAtCurrent(conditions, "Pit");
+	
+	CurrentFuel = MaxFuel;
 }
 
 // Called every frame
@@ -68,6 +75,11 @@ void ACarPawn::Tick(float DeltaTime)
 		}
 	}
 
+	if (CurrentFuel <= 0.0f)
+	{
+		CurrentThrottleInput = 0.0f;
+	}
+
 	float normalisedSpeed = CurrentSpeed / MaxSpeed;
 
 	if (normalisedSpeed != CurrentThrottleInput)
@@ -90,6 +102,11 @@ void ACarPawn::Tick(float DeltaTime)
 	}
 
 	SetActorLocation(GetActorLocation() + ((GetActorForwardVector() * CurrentSpeed) * DeltaTime));
+
+	if (CurrentThrottleInput != 0.0f)
+	{
+			CurrentFuel -= (FuelMaxDecay * abs(CurrentThrottleInput)) * DeltaTime;
+	}
 }
 
 // Called to bind functionality to input
@@ -319,6 +336,11 @@ FString ACarPawn::DecideNewTask()
 	FString task = DecisionTree->MakeDecision();
 	DecisionTree->ResetCurrent();
 	return task;
+}
+
+bool ACarPawn::GetIsLowOnFuel()
+{
+	return (CurrentFuel / MaxFuel) <= 0.1f;
 }
 
 void ACarPawn::OnEnterRange(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,

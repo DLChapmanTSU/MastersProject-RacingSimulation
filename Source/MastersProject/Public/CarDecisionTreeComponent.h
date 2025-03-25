@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/Object.h"
-#include "CarDecisionTree.generated.h"
+#include "Components/ActorComponent.h"
+#include "CarDecisionTreeComponent.generated.h"
 
 USTRUCT()
 struct FDecisionTreeNode
@@ -15,21 +15,25 @@ struct FDecisionTreeNode
 	FString DecisionKey = "None";
 };
 
-class ACarPawn;
-/**
- * 
- */
-UCLASS()
-class MASTERSPROJECT_API UCarDecisionTree : public UObject
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+class MASTERSPROJECT_API UCarDecisionTreeComponent : public UActorComponent
 {
 	GENERATED_BODY()
+
+public:
+	// Sets default values for this component's properties
+	UCarDecisionTreeComponent();
+
 protected:
 	TArray<FDecisionTreeNode> Nodes;
 	int Current = 0;
-	ACarPawn* CarPawn;
+	// Called when the game starts
+	virtual void BeginPlay() override;
+
 public:
-	UCarDecisionTree();
-	void SetCar(ACarPawn* NewCarPawn);
+	// Called every frame
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
+	                           FActorComponentTickFunction* ThisTickFunction) override;
 	void ResetCurrent();
 	void SetCurrent(int NewCurrent);
 	int CreateChildAtCurrent(TArray<int>& cons,FString key);
