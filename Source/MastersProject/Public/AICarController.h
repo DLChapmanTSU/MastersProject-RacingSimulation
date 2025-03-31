@@ -35,6 +35,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	int GetNextSplineTarget();
+	bool GetIsFollowingPits();
 
 	UFUNCTION(BlueprintCallable)
 		void UpdateWaypointTarget(int target);

@@ -50,4 +50,5 @@ public:
 	bool IsLowOnFuel();
 	bool IsNearEndOfRace();
 	bool IsNearPits();
+	bool IsInPits();
 };

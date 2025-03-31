@@ -3,6 +3,7 @@
 
 #include "CarDecisionTreeComponent.h"
 #include "CarPawn.h"
+#include "AICarController.h"
 
 
 // Sets default values for this component's properties
@@ -96,10 +97,7 @@ FString UCarDecisionTreeComponent::MakeDecision()
 
 		for (int i = 0; i < Nodes[Current].Conditions.Num(); i++)
 		{
-			if (Nodes[Current].Conditions[i] < 5)
-			{
-				result = (result && CheckCondition(Nodes[Current].Conditions[i]));
-			}
+			result = (result && CheckCondition(Nodes[Current].Conditions[i]));
 
 			if (result == false)
 				break;
@@ -120,7 +118,7 @@ FString UCarDecisionTreeComponent::MakeDecision()
 
 bool UCarDecisionTreeComponent::CheckCondition(int condition)
 {
-	if (condition < 0 || condition >= 5)
+	if (condition < 0 || condition >= 7)
 		return false;
 
 	switch (condition)
@@ -137,6 +135,8 @@ bool UCarDecisionTreeComponent::CheckCondition(int condition)
 		return IsNearEndOfRace();
 	case 5:
 		return IsNearPits();
+	case 6:
+		return IsInPits();
 	default:
 		return false;
 	}
@@ -182,5 +182,24 @@ bool UCarDecisionTreeComponent::IsNearPits()
 	ACarPawn* car = Cast<ACarPawn>(GetOwner());
 	if (car != nullptr && IsValid(car))
 		return car->GetCurrentTarget() == SplineTargetAfterPits;
+	return false;
+}
+
+bool UCarDecisionTreeComponent::IsInPits()
+{
+	ACarPawn* car = Cast<ACarPawn>(GetOwner());
+	if (car != nullptr && IsValid(car))
+	{
+		AController* controller = car->GetController();
+		if (controller != nullptr && IsValid(controller))
+		{
+			AAICarController* carController = Cast<AAICarController>(controller);
+			if (carController != nullptr && IsValid(carController))
+			{
+				return carController->GetIsFollowingPits();
+			}
+		}
+	}
+
 	return false;
 }

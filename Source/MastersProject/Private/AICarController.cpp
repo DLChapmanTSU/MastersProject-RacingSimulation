@@ -88,6 +88,15 @@ void AAICarController::Tick(float DeltaTime)
 				
 				inputs = CarPawn->CalculateInputs(targetTransform, PitLineManager, DeltaTime);
 			}
+			else if (task == "InPit")
+			{
+				inputs = CarPawn->CalculateInputs(targetTransform, PitLineManager, DeltaTime, true, true);
+			}
+			else if (task == "Conserve")
+			{
+				IsFollowingPit = false;
+				inputs = CarPawn->CalculateInputs(targetTransform, RacingLineManager, DeltaTime, true);
+			}
 			else
 			{
 				IsFollowingPit = false;
@@ -107,6 +116,11 @@ void AAICarController::Tick(float DeltaTime)
 int AAICarController::GetNextSplineTarget()
 {
 	return NextSplineTarget;
+}
+
+bool AAICarController::GetIsFollowingPits()
+{
+	return IsFollowingPit;
 }
 
 void AAICarController::UpdateWaypointTarget(int target)

@@ -71,7 +71,7 @@ public:
 
 	void SetThrottleInput(float Input);
 	void SetTurnInput(float Input);
-	FVector2f CalculateInputs(FTransform target, ARacingLineManager* lineManager, float DeltaTime);
+	FVector2f CalculateInputs(FTransform target, ARacingLineManager* lineManager, float DeltaTime, bool shouldConserve = false, bool hasPitLimiter = false);
 	FVector2f CalculateAvoidance(ARacingLineManager* lineManager, float DeltaTime);
 	bool HasCarsToAvoid();
 	float GetSlowestNearbySpeed();

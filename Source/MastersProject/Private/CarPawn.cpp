@@ -34,8 +34,13 @@ void ACarPawn::BeginPlay()
 	Super::BeginPlay();
 
 	TArray<int> conditions;
-	conditions.Add(3);
+	DecisionTree->ResetCurrent();
+	conditions.Add(6);
 	DecisionTree->CreateChildAtCurrent(conditions, "Root");
+	conditions.Empty();
+	conditions.Add(3);
+	int nonPitRoot = DecisionTree->CreateChildAtCurrent(conditions, "ERROR");
+	DecisionTree->SetCurrent(nonPitRoot);
 	conditions.Empty();
 	conditions.Add(0);
 	conditions.Add(1);
@@ -44,8 +49,18 @@ void ACarPawn::BeginPlay()
 	conditions.Empty();
 	DecisionTree->CreateChildAtCurrent(conditions, "Hotlap");
 	DecisionTree->CreateChildAtCurrent(conditions, "Overtake");
-	DecisionTree->SetCurrent(0);
+	DecisionTree->SetCurrent(nonPitRoot);
+	conditions.Empty();
+	conditions.Add(5);
+	next = DecisionTree->CreateChildAtCurrent(conditions, "ERROR");
+	DecisionTree->SetCurrent(next);
+	conditions.Empty();
+	DecisionTree->CreateChildAtCurrent(conditions, "Conserve");
 	DecisionTree->CreateChildAtCurrent(conditions, "Pit");
+	
+	DecisionTree->ResetCurrent();
+	DecisionTree->CreateChildAtCurrent(conditions, "InPit");
+	DecisionTree->ResetCurrent();
 	
 	CurrentFuel = MaxFuel;
 }
@@ -128,7 +143,7 @@ void ACarPawn::SetTurnInput(float Input)
 	CurrentTurnInput = FMath::Clamp(Input, -1.0f, 1.0f);
 }
 
-FVector2f ACarPawn::CalculateInputs(FTransform target, ARacingLineManager* lineManager, float DeltaTime)
+FVector2f ACarPawn::CalculateInputs(FTransform target, ARacingLineManager* lineManager, float DeltaTime, bool shouldConserve, bool hasPitLimiter)
 {
 	USplineComponent* spline = lineManager->GetSpline();
 	FTransform afterTarget = lineManager->GetNextNextSplineTransform(GetActorLocation());
@@ -180,6 +195,15 @@ FVector2f ACarPawn::CalculateInputs(FTransform target, ARacingLineManager* lineM
 	FVector2f inputs = FVector2f::Zero();
 	inputs.X = throttleInput;
 	inputs.Y = turnInput;
+
+	if (hasPitLimiter)
+	{
+		inputs.X = FMath::Clamp(inputs.X, -0.3f, 0.3f);
+	}
+	else if (shouldConserve)
+	{
+		inputs.X = FMath::Clamp(inputs.X, -0.75f, 0.75f);
+	}
 	
 	return inputs;
 }
