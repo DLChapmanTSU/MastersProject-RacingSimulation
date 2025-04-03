@@ -7,7 +7,10 @@
 #include "AIController.h"
 #include "Components/SplineComponent.h"
 #include "CarDecisionTreeComponent.h"
+#include "Engine/StaticMeshActor.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 
 // Sets default values
@@ -196,6 +199,23 @@ FVector2f ACarPawn::CalculateInputs(FTransform target, ARacingLineManager* lineM
 	inputs.X = throttleInput;
 	inputs.Y = turnInput;
 
+	TArray<AActor*> ignored;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AStaticMeshActor::StaticClass(), ignored);
+	FHitResult hitRight;
+	bool rightHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * 100.0f), 100.0f, ETraceTypeQuery::TraceTypeQuery1, true, ignored, EDrawDebugTrace::ForDuration, hitRight, true, FLinearColor::Green, FLinearColor::Red, 1.0f);
+	if (rightHasHit)
+	{
+		inputs.Y = FMath::Clamp(inputs.Y, -1.0f, 0.0f);
+	}
+
+	FHitResult hitLeft;
+	bool leftHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * -100.0f), 100.0f, ETraceTypeQuery::TraceTypeQuery1, true, ignored, EDrawDebugTrace::ForDuration, hitLeft, true, FLinearColor::Blue, FLinearColor::Yellow, 1.0f);
+	if (leftHasHit)
+	{
+		inputs.Y = FMath::Clamp(inputs.Y, 0.0f, 1.0f);
+	}
+	
+
 	if (hasPitLimiter)
 	{
 		inputs.X = FMath::Clamp(inputs.X, -0.3f, 0.3f);
@@ -330,6 +350,22 @@ FVector2f ACarPawn::CalculateAvoidance(ARacingLineManager* lineManager, float De
 	inputs = FVector2f::Zero();
 	inputs.X = throttleInput;
 	inputs.Y = turnInput;
+	
+	TArray<AActor*> ignored;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AStaticMeshActor::StaticClass(), ignored);
+	FHitResult hitRight;
+	bool rightHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * 100.0f), 100.0f, ETraceTypeQuery::TraceTypeQuery1, true, ignored, EDrawDebugTrace::ForDuration, hitRight, true, FLinearColor::Green, FLinearColor::Red, 1.0f);
+	if (rightHasHit)
+	{
+		inputs.Y = FMath::Clamp(inputs.Y, -1.0f, 0.0f);
+	}
+
+	FHitResult hitLeft;
+	bool leftHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * -100.0f), 100.0f, ETraceTypeQuery::TraceTypeQuery1, true, ignored, EDrawDebugTrace::ForDuration, hitLeft, true, FLinearColor::Blue, FLinearColor::Yellow, 1.0f);
+	if (leftHasHit)
+	{
+		inputs.Y = FMath::Clamp(inputs.Y, 0.0f, 1.0f);
+	}
 	
 	return inputs;
 }
