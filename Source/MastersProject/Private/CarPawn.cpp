@@ -200,17 +200,18 @@ FVector2f ACarPawn::CalculateInputs(FTransform target, ARacingLineManager* lineM
 	inputs.Y = turnInput;
 
 	TArray<AActor*> ignored;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AStaticMeshActor::StaticClass(), ignored);
+	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("NonObstacle"), ignored);
+	ignored.Add(this);
 	FHitResult hitRight;
-	bool rightHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * 100.0f), 100.0f, ETraceTypeQuery::TraceTypeQuery1, true, ignored, EDrawDebugTrace::ForDuration, hitRight, true, FLinearColor::Green, FLinearColor::Red, 1.0f);
-	if (rightHasHit)
+	bool rightHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * 100.0f), 10.0f, ETraceTypeQuery::TraceTypeQuery1, false, ignored, EDrawDebugTrace::None, hitRight, true, FLinearColor::Green, FLinearColor::Red, 1.0f);
+	if (hitRight.bBlockingHit)
 	{
 		inputs.Y = FMath::Clamp(inputs.Y, -1.0f, 0.0f);
 	}
 
 	FHitResult hitLeft;
-	bool leftHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * -100.0f), 100.0f, ETraceTypeQuery::TraceTypeQuery1, true, ignored, EDrawDebugTrace::ForDuration, hitLeft, true, FLinearColor::Blue, FLinearColor::Yellow, 1.0f);
-	if (leftHasHit)
+	bool leftHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * -100.0f), 10.0f, ETraceTypeQuery::TraceTypeQuery1, false, ignored, EDrawDebugTrace::None, hitLeft, true, FLinearColor::Blue, FLinearColor::Yellow, 1.0f);
+	if (hitLeft.bBlockingHit)
 	{
 		inputs.Y = FMath::Clamp(inputs.Y, 0.0f, 1.0f);
 	}
@@ -352,17 +353,18 @@ FVector2f ACarPawn::CalculateAvoidance(ARacingLineManager* lineManager, float De
 	inputs.Y = turnInput;
 	
 	TArray<AActor*> ignored;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AStaticMeshActor::StaticClass(), ignored);
+	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("NonObstacle"), ignored);
+	ignored.Add(this);
 	FHitResult hitRight;
-	bool rightHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * 100.0f), 100.0f, ETraceTypeQuery::TraceTypeQuery1, true, ignored, EDrawDebugTrace::ForDuration, hitRight, true, FLinearColor::Green, FLinearColor::Red, 1.0f);
-	if (rightHasHit)
+	bool rightHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * 100.0f), 10.0f, ETraceTypeQuery::TraceTypeQuery1, false, ignored, EDrawDebugTrace::None, hitRight, true, FLinearColor::Green, FLinearColor::Red, 1.0f);
+	if (hitRight.bBlockingHit)
 	{
 		inputs.Y = FMath::Clamp(inputs.Y, -1.0f, 0.0f);
 	}
 
 	FHitResult hitLeft;
-	bool leftHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * -100.0f), 100.0f, ETraceTypeQuery::TraceTypeQuery1, true, ignored, EDrawDebugTrace::ForDuration, hitLeft, true, FLinearColor::Blue, FLinearColor::Yellow, 1.0f);
-	if (leftHasHit)
+	bool leftHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * -100.0f), 10.0f, ETraceTypeQuery::TraceTypeQuery1, false, ignored, EDrawDebugTrace::None, hitLeft, true, FLinearColor::Blue, FLinearColor::Yellow, 1.0f);
+	if (hitLeft.bBlockingHit)
 	{
 		inputs.Y = FMath::Clamp(inputs.Y, 0.0f, 1.0f);
 	}
