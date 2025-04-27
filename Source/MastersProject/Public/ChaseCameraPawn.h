@@ -38,4 +38,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void Switch(const struct FInputActionValue& ActionValue);
+
+	UFUNCTION(BlueprintCallable)
+		AActor* GetCurrentCar();
 };

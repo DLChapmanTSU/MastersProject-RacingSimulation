@@ -28,7 +28,9 @@ protected:
 	bool IsFollowingPit = false;
 
 	int NextSplineTarget = 1;
+	int LastSplineTarget = 0;
 	int PitReturnTarget = 2;
+	int LapsCompleted = 0;
 
 public:
 	// Called every frame
@@ -39,4 +41,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		void UpdateWaypointTarget(int target);
+
+	UFUNCTION(BlueprintCallable)
+		int GetLapsCompleted();
 };

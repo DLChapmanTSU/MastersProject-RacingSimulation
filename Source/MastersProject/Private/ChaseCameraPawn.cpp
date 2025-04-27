@@ -72,3 +72,11 @@ void AChaseCameraPawn::Switch(const struct FInputActionValue& ActionValue)
 		CurrentCar = 0;
 }
 
+AActor* AChaseCameraPawn::GetCurrentCar()
+{
+	if (Cars.IsValidIndex(CurrentCar))
+		return Cars[CurrentCar];
+
+	return nullptr;
+}
+

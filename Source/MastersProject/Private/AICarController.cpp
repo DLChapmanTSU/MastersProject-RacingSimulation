@@ -58,58 +58,52 @@ void AAICarController::Tick(float DeltaTime)
 
 		FString task = CarPawn->DecideNewTask();
 		
-		if (targetTransform.GetRotation() == CarPawn->GetActorRotation().Quaternion() && task == "HotLap")
+		FRotator rotatorDiff = targetTransform.Rotator() - CarPawn->GetActorRotation();
+		FVector2f inputs;
+
+		if (task == "HotLap")
 		{
-			CarPawn->SetThrottleInput(1.0f);
-			CarPawn->SetTurnInput(0.0f);
+			IsFollowingPit = false;
+			inputs = CarPawn->CalculateAvoidance(targetTransform, RacingLineManager, DeltaTime);
+		}
+		else if (task == "Overtake")
+		{
+			IsFollowingPit = false;
+			inputs = CarPawn->CalculateAvoidance(targetTransform, RacingLineManager, DeltaTime);
+		}
+		else if (task == "Pit")
+		{
+			if (IsFollowingPit == false)
+			{
+				IsFollowingPit = true;
+				NextSplineTarget = 0;
+			}
+				
+			inputs = CarPawn->CalculateInputs(targetTransform, PitLineManager, DeltaTime);
+		}
+		else if (task == "InPit")
+		{
+			inputs = CarPawn->CalculateInputs(targetTransform, PitLineManager, DeltaTime, true, true);
+		}
+		else if (task == "Conserve")
+		{
+			IsFollowingPit = false;
+			inputs = CarPawn->CalculateInputs(targetTransform, RacingLineManager, DeltaTime, true);
 		}
 		else
 		{
-			FRotator rotatorDiff = targetTransform.Rotator() - CarPawn->GetActorRotation();
-			FVector2f inputs;
-
-			if (task == "HotLap")
-			{
-				IsFollowingPit = false;
-				inputs = CarPawn->CalculateInputs(targetTransform, RacingLineManager, DeltaTime);
-			}
-			else if (task == "Overtake")
-			{
-				IsFollowingPit = false;
-				inputs = CarPawn->CalculateAvoidance(RacingLineManager, DeltaTime);
-			}
-			else if (task == "Pit")
-			{
-				if (IsFollowingPit == false)
-				{
-					IsFollowingPit = true;
-					NextSplineTarget = 0;
-				}
-				
-				inputs = CarPawn->CalculateInputs(targetTransform, PitLineManager, DeltaTime);
-			}
-			else if (task == "InPit")
-			{
-				inputs = CarPawn->CalculateInputs(targetTransform, PitLineManager, DeltaTime, true, true);
-			}
-			else if (task == "Conserve")
-			{
-				IsFollowingPit = false;
-				inputs = CarPawn->CalculateInputs(targetTransform, RacingLineManager, DeltaTime, true);
-			}
-			else
-			{
-				IsFollowingPit = false;
-				inputs = CarPawn->CalculateInputs(targetTransform, RacingLineManager, DeltaTime);
-			}
-
-			//if (task == "HotLap")
-			//	inputs = CarPawn->CalculateInputs(targetTransform, RacingLineManager, DeltaTime);
-			//else
-			//	inputs = CarPawn->CalculateAvoidance(RacingLineManager, DeltaTime);
-			CarPawn->SetThrottleInput(inputs.X);
-			CarPawn->SetTurnInput(inputs.Y);
+			IsFollowingPit = false;
+			inputs = CarPawn->CalculateInputs(targetTransform, RacingLineManager, DeltaTime);
 		}
+			
+		//if (task == "HotLap")
+		//	inputs = CarPawn->CalculateInputs(targetTransform, RacingLineManager, DeltaTime);
+		//else
+		//	inputs = CarPawn->CalculateAvoidance(RacingLineManager, DeltaTime);
+		CarPawn->SetThrottleInput(inputs.X);
+		CarPawn->SetTurnInput(inputs.Y);
+
+		CarPawn->CheckEvasiveActions(RacingLineManager, DeltaTime);
 	}
 }
 
@@ -125,6 +119,7 @@ bool AAICarController::GetIsFollowingPits()
 
 void AAICarController::UpdateWaypointTarget(int target)
 {
+	LastSplineTarget = NextSplineTarget;
 	NextSplineTarget = target;
 
 	if (IsFollowingPit)
@@ -140,6 +135,18 @@ void AAICarController::UpdateWaypointTarget(int target)
 	{
 		if (NextSplineTarget >= RacingLineManager->GetSplinePointCount() || NextSplineTarget < 0)
 			NextSplineTarget = 0;
+
+		if (NextSplineTarget == 1 && LastSplineTarget == 0)
+		{
+			LapsCompleted++;
+			if (GEngine)
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "FinishedLap");
+		}
 	}
+}
+
+int AAICarController::GetLapsCompleted()
+{
+	return LapsCompleted;
 }
 
