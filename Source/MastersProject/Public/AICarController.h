@@ -31,6 +31,7 @@ protected:
 	int LastSplineTarget = 0;
 	int PitReturnTarget = 2;
 	int LapsCompleted = 0;
+	int TotalLaps = 1;
 
 public:
 	// Called every frame
@@ -44,4 +45,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		int GetLapsCompleted();
+
+	UFUNCTION(BlueprintCallable)
+		int GetTotalLaps();
 };

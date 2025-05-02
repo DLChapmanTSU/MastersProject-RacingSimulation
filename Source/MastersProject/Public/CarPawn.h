@@ -88,6 +88,9 @@ public:
 	int GetCurrentTarget();
 	FVector2f CheckEvasiveActions(ARacingLineManager* lineManager, float DeltaTime);
 
+	UFUNCTION(BlueprintCallable)
+		float GetCurrentFuel();
+
 	UFUNCTION()
 	void OnEnterRange(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 					UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

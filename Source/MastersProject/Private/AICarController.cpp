@@ -2,6 +2,8 @@
 
 
 #include "AICarController.h"
+
+#include "CarGameInstance.h"
 #include "CarPawn.h"
 #include "RacingLineManager.h"
 #include "Kismet/GameplayStatics.h"
@@ -36,6 +38,16 @@ void AAICarController::BeginPlay()
 			}
 		}
 	}
+
+	UGameInstance* GameInstance = GetWorld()->GetGameInstance();
+	if (GameInstance != nullptr && IsValid(GameInstance))
+	{
+		UCarGameInstance* CarGameInstance = Cast<UCarGameInstance>(GameInstance);
+		if (CarGameInstance != nullptr && IsValid(CarGameInstance))
+		{
+			TotalLaps = CarGameInstance->GetTotalLaps();
+		}
+	}
 }
 
 // Called every frame
@@ -45,6 +57,12 @@ void AAICarController::Tick(float DeltaTime)
 
 	if (CarPawn != nullptr && IsValid(CarPawn) && RacingLineManager != nullptr && IsValid(RacingLineManager) && PitLineManager != nullptr && IsValid(PitLineManager))
 	{
+		if (LapsCompleted >= TotalLaps)
+		{
+			CarPawn->SetThrottleInput(0);
+			CarPawn->SetTurnInput(0);
+			return;
+		}
 		FTransform targetTransform = IsFollowingPit ? PitLineManager->GetSplinePoint(NextSplineTarget) : RacingLineManager->GetSplinePoint(NextSplineTarget);
 		/*FVector diff = targetTransform.GetLocation() - CarPawn->GetActorLocation();
 		if (diff.Length() <= 100.0f)
@@ -129,6 +147,13 @@ void AAICarController::UpdateWaypointTarget(int target)
 			NextSplineTarget = PitReturnTarget;
 			IsFollowingPit = false;
 			CarPawn->Refuel();
+			LapsCompleted++;
+			if (GEngine)
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "FinishedLap");
+
+			if (LapsCompleted >= TotalLaps)
+				if (GEngine)
+					GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "FinishedRace");
 		}
 	}
 	else
@@ -141,6 +166,10 @@ void AAICarController::UpdateWaypointTarget(int target)
 			LapsCompleted++;
 			if (GEngine)
 				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "FinishedLap");
+
+			if (LapsCompleted >= TotalLaps)
+				if (GEngine)
+					GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "FinishedRace");
 		}
 	}
 }
@@ -148,5 +177,10 @@ void AAICarController::UpdateWaypointTarget(int target)
 int AAICarController::GetLapsCompleted()
 {
 	return LapsCompleted;
+}
+
+int AAICarController::GetTotalLaps()
+{
+	return TotalLaps;
 }
 

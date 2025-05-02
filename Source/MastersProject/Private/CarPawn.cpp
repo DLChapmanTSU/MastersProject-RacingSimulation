@@ -592,6 +592,11 @@ FVector2f ACarPawn::CheckEvasiveActions(ARacingLineManager* lineManager, float D
 	return newInputs;
 }
 
+float ACarPawn::GetCurrentFuel()
+{
+	return CurrentFuel;
+}
+
 void ACarPawn::OnEnterRange(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                             int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
