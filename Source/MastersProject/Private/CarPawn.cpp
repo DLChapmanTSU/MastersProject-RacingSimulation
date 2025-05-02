@@ -230,14 +230,14 @@ FVector2f ACarPawn::CalculateInputs(FTransform target, ARacingLineManager* lineM
 	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("NonObstacle"), ignored);
 	ignored.Add(this);
 	FHitResult hitRight;
-	bool rightHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * 50.0f), 10.0f, ETraceTypeQuery::TraceTypeQuery1, false, ignored, EDrawDebugTrace::ForDuration, hitRight, true, FLinearColor::Green, FLinearColor::Red, 1.0f);
+	bool rightHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * 50.0f), 10.0f, ETraceTypeQuery::TraceTypeQuery1, false, ignored, EDrawDebugTrace::None, hitRight, true, FLinearColor::Green, FLinearColor::Red, 1.0f);
 	if (hitRight.bBlockingHit)
 	{
 		inputs.Y = FMath::Clamp(inputs.Y, -1.0f, 0.0f);
 	}
 
 	FHitResult hitLeft;
-	bool leftHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * -50.0f), 10.0f, ETraceTypeQuery::TraceTypeQuery1, false, ignored, EDrawDebugTrace::ForDuration, hitLeft, true, FLinearColor::Blue, FLinearColor::Yellow, 1.0f);
+	bool leftHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * -50.0f), 10.0f, ETraceTypeQuery::TraceTypeQuery1, false, ignored, EDrawDebugTrace::None, hitLeft, true, FLinearColor::Blue, FLinearColor::Yellow, 1.0f);
 	if (hitLeft.bBlockingHit)
 	{
 		inputs.Y = FMath::Clamp(inputs.Y, 0.0f, 1.0f);
@@ -315,8 +315,25 @@ FVector2f ACarPawn::CalculateAvoidance(FTransform defaultTarget, ARacingLineMana
 	//	return CalculateInputs(defaultTarget, lineManager, DeltaTime);
 
 	FVector overtakeTarget = GetActorLocation();
-	
-	if (leftDist > rightDist || FMath::Abs(leftDist - rightDist) <= 0.0f)
+
+	if (NearbyCars.Num() == 1)
+	{
+		if (leftmostCar != nullptr && IsValid(leftmostCar))
+		{
+			FVector targetRight = leftmostCar->GetActorLocation() + (lineManager->GetNearestRightVector(leftmostCar->GetActorLocation()) * 10.0f);
+			FVector targetLeft = leftmostCar->GetActorLocation() + (lineManager->GetNearestRightVector(leftmostCar->GetActorLocation()) * -10.0f);
+
+			if (FVector::Dist(GetActorLocation(), targetRight) <= FVector::Dist(GetActorLocation(), targetLeft))
+			{
+				overtakeTarget = leftmostCar->GetActorLocation() + (lineManager->GetNearestRightVector(leftmostCar->GetActorLocation()) * 30.0f);
+			}
+			else
+			{
+				overtakeTarget = leftmostCar->GetActorLocation() + (lineManager->GetNearestRightVector(leftmostCar->GetActorLocation()) * -30.0f);
+			}
+		}
+	}
+	else if (leftDist > rightDist || FMath::Abs(leftDist - rightDist) <= 0.0f)
 	{
 		if (leftmostCar != nullptr && IsValid(leftmostCar))
 		{
@@ -383,7 +400,7 @@ FVector2f ACarPawn::CalculateAvoidance(FTransform defaultTarget, ARacingLineMana
 	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("NonObstacle"), ignored);
 	ignored.Add(this);
 	FHitResult hitRight;
-	bool rightHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * 50.0f), 10.0f, ETraceTypeQuery::TraceTypeQuery1, false, ignored, EDrawDebugTrace::ForDuration, hitRight, true, FLinearColor::Green, FLinearColor::Red, 1.0f);
+	bool rightHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * 50.0f), 10.0f, ETraceTypeQuery::TraceTypeQuery1, false, ignored, EDrawDebugTrace::None, hitRight, true, FLinearColor::Green, FLinearColor::Red, 1.0f);
 	if (hitRight.bBlockingHit)
 	{
 		inputs.Y = FMath::Clamp(inputs.Y, -1.0f, 0.0f);
@@ -400,7 +417,7 @@ FVector2f ACarPawn::CalculateAvoidance(FTransform defaultTarget, ARacingLineMana
 	}
 
 	FHitResult hitLeft;
-	bool leftHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * -50.0f), 10.0f, ETraceTypeQuery::TraceTypeQuery1, false, ignored, EDrawDebugTrace::ForDuration, hitLeft, true, FLinearColor::Blue, FLinearColor::Yellow, 1.0f);
+	bool leftHasHit = UKismetSystemLibrary::SphereTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorRightVector() * -50.0f), 10.0f, ETraceTypeQuery::TraceTypeQuery1, false, ignored, EDrawDebugTrace::None, hitLeft, true, FLinearColor::Blue, FLinearColor::Yellow, 1.0f);
 	if (hitLeft.bBlockingHit)
 	{
 		inputs.Y = FMath::Clamp(inputs.Y, 0.0f, 1.0f);

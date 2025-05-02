@@ -41,7 +41,7 @@ public:
 	bool GetIsFollowingPits();
 
 	UFUNCTION(BlueprintCallable)
-		void UpdateWaypointTarget(int target);
+		void UpdateWaypointTarget(int nextPoint);
 
 	UFUNCTION(BlueprintCallable)
 		int GetLapsCompleted();

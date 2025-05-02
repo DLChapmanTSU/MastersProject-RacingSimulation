@@ -135,10 +135,10 @@ bool AAICarController::GetIsFollowingPits()
 	return IsFollowingPit;
 }
 
-void AAICarController::UpdateWaypointTarget(int target)
+void AAICarController::UpdateWaypointTarget(int nextPoint)
 {
 	LastSplineTarget = NextSplineTarget;
-	NextSplineTarget = target;
+	NextSplineTarget = nextPoint;
 
 	if (IsFollowingPit)
 	{
